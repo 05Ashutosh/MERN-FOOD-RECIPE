@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -11,8 +11,7 @@ import RecipeDetails from "./pages/RecipeDetails";
 import UserProfile from "./pages/UserProfile";
 import RecipeForm from "./pages/RecipeForm";
 import FavoritesPage from "./pages/FavoritesPage";
-import VideoPage from "./pages/VideoPage";
-import VideoPlayerPage from "./pages/VideoPlayerPage";
+import Settings from "./pages/Settings";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
@@ -30,29 +29,60 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const ProtectedLayout = () => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const sidebarRef = useRef(null);
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target) &&
+        !isSidebarCollapsed
+      ) {
+        setIsSidebarCollapsed(true);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSidebarCollapsed]);
+
   return (
     <>
       <Navbar />
-      <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
-      <Outlet />
+      <div ref={sidebarRef}>
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          toggleSidebar={toggleSidebar}
+        />
+      </div>
+      <div
+        className={`transition-all duration-300 ${
+          isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
+        }`}
+      >
+        <Outlet />
+      </div>
     </>
   );
 };
 
 const App = () => {
   const dispatch = useDispatch();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
         dispatch(setAuthenticated(false));
+        setIsCheckingAuth(false);
         return;
       }
 
@@ -63,7 +93,8 @@ const App = () => {
           null,
           dispatch
         );
-        dispatch(setUser({ user: response.data.data.user, token }));
+        dispatch(setUser({ user: response.data.user, token }));
+        setIsCheckingAuth(false);
       } catch (error) {
         if (error.message.includes("Unauthorized")) {
           try {
@@ -83,21 +114,35 @@ const App = () => {
             );
             dispatch(
               setUser({
-                user: currentUserResponse.data.data.user,
+                user: currentUserResponse.data.user,
                 token: newToken,
               })
             );
+            setIsCheckingAuth(false);
           } catch (refreshError) {
             dispatch(logoutUser());
+            setIsCheckingAuth(false);
           }
         } else {
           dispatch(logoutUser());
+          setIsCheckingAuth(false);
         }
       }
     };
 
     checkAuth();
   }, [dispatch]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -116,10 +161,10 @@ const App = () => {
           <Route index element={<Home />} />
           <Route path="recipe/:id" element={<RecipeDetails />} />
           <Route path="profile" element={<UserProfile />} />
+          <Route path="user/:username" element={<UserProfile />} />
           <Route path="create-recipe" element={<RecipeForm />} />
           <Route path="favorites" element={<FavoritesPage />} />
-          <Route path="videos" element={<VideoPage />} />
-          <Route path="video/:id" element={<VideoPlayerPage />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </>

@@ -1,118 +1,137 @@
-import React, { useState } from 'react';
-import VideoCard from '../components/VideoCard';
-import RecipeCard from '../components/RecipeCard';
-import { Heart } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import VideoCard from "../components/videoCard";
+import RecipeCard from "../components/RecipeCard";
+import { Heart } from "lucide-react";
+import { apiRequest } from "../utils/api";
 
 const FavoritesPage = () => {
-    const [activeTab, setActiveTab] = useState('videos');
+  const dispatch = useDispatch();
+  const [activeTab, setActiveTab] = useState("recipes");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
+  const favoriteVideos = [];
 
-    const favorites = [
-        // Video Example
-        {
-            id: 1,
-            type: 'video',
-            title: 'Perfect Homemade Pizza',
-            thumbnail: 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
-            duration: '12:30',
-            category: 'Food',
-            channel: 'Cooking Master',
-            channelAvatar: 'https://via.placeholder.com/40',
-            description: 'Learn to make authentic Italian pizza at home',
-            likes: 1500,
-            videoUrl: '/pizza-video.mp4'
-        },
-        // Recipe Example
-        {
-            id: 2,
-            type: 'recipe',
-            title: 'Classic Carbonara',
-            category: 'Main Course',
-            difficulty: 'Intermediate',
-            prepTime: 15,
-            cookTime: 20,
-            author: 'Chef Maria',
-            authorAvatar: 'https://via.placeholder.com/40',
-            image: 'https://images.unsplash.com/photo-1506368249639-73a05d6f6488',
-            description: 'Creamy Roman pasta dish with pancetta',
-            tags: ['Italian', 'Pasta', 'Quick Meal']
-        }
-    ];
+  useEffect(() => {
+    const fetchLikedRecipes = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await apiRequest(
+          "/likes/recipes",
+          "GET",
+          null,
+          dispatch
+        );
+        console.log("Liked recipes response:", response);
+        setFavoriteRecipes(response.data?.recipes || []);
+      } catch (error) {
+        console.error("Failed to fetch liked recipes:", error);
+        setError(error.message || "Failed to load favorites");
+        setFavoriteRecipes([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const favoriteVideos = favorites.filter(item => item.type === 'video');
-    const favoriteRecipes = favorites.filter(item => item.type === 'recipe');
+    fetchLikedRecipes();
+  }, [dispatch]);
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="container mx-auto px-4 py-8">
-                {/* Header Section */}
-                <div className="mb-8 text-center">
-                    <div className="inline-flex items-center bg-orange-100 text-orange-500 px-6 py-2 rounded-full mb-4">
-                        <Heart className="h-5 w-5 mr-2" />
-                        <h1 className="text-2xl font-bold">Your Favorites</h1>
-                    </div>
+  return (
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden max-w-full">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center bg-orange-100 text-orange-500 px-6 py-2 rounded-full mb-4">
+            <Heart className="h-5 w-5 mr-2" />
+            <h1 className="text-2xl font-bold">Your Favorites</h1>
+          </div>
 
-                    {/* Tab Navigation */}
-                    <div className="flex justify-center gap-4 border-b border-gray-200 pb-4">
-                        <button
-                            onClick={() => setActiveTab('videos')}
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                                activeTab === 'videos'
-                                    ? 'bg-orange-100 text-orange-500'
-                                    : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                            Videos ({favoriteVideos.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('recipes')}
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                                activeTab === 'recipes'
-                                    ? 'bg-orange-100 text-orange-500'
-                                    : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                            Recipes ({favoriteRecipes.length})
-                        </button>
-                    </div>
-                </div>
-
-                {/* Content Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {activeTab === 'videos' ? (
-                        favoriteVideos.length > 0 ? (
-                            favoriteVideos.map(video => (
-                                <VideoCard
-                                    key={`video-${video.id}`}
-                                    video={video}
-                                />
-                            ))
-                        ) : (
-                            <div className="col-span-full text-center py-12 text-gray-500">
-                                <Heart className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                                <p className="text-lg">No favorite videos found</p>
-                                <p className="text-sm mt-2">Start adding favorites by clicking the ♡ icon!</p>
-                            </div>
-                        )
-                    ) : (
-                        favoriteRecipes.length > 0 ? (
-                            favoriteRecipes.map(recipe => (
-                                <RecipeCard
-                                    key={`recipe-${recipe.id}`}
-                                    recipe={recipe}
-                                />
-                            ))
-                        ) : (
-                            <div className="col-span-full text-center py-12 text-gray-500">
-                                <Heart className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                                <p className="text-lg">No favorite recipes found</p>
-                                <p className="text-sm mt-2">Save your favorite recipes using the ♡ button!</p>
-                            </div>
-                        )
-                    )}
-                </div>
-            </div>
+          <div className="flex justify-center gap-4 border-b border-gray-200 pb-4">
+            <button
+              onClick={() => setActiveTab("videos")}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+                activeTab === "videos"
+                  ? "bg-orange-100 text-orange-500"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Videos ({favoriteVideos.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("recipes")}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+                activeTab === "recipes"
+                  ? "bg-orange-100 text-orange-500"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Recipes ({favoriteRecipes.length})
+            </button>
+          </div>
         </div>
-    );
+
+        {error ? (
+          <div className="col-span-full text-center py-12">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <p className="text-red-600 font-semibold mb-2">
+                Error loading favorites
+              </p>
+              <p className="text-red-500 text-sm">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : loading ? (
+          <div className="col-span-full text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading favorites...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {activeTab === "videos" ? (
+              favoriteVideos.length > 0 ? (
+                favoriteVideos.map((video) => (
+                  <VideoCard key={`video-${video.id}`} video={video} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                  <Heart className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                  <p className="text-lg">No favorite videos yet</p>
+                  <p className="text-sm mt-2">Videos feature coming soon!</p>
+                </div>
+              )
+            ) : favoriteRecipes.length > 0 ? (
+              favoriteRecipes.map((recipe) => (
+                <RecipeCard
+                  key={`recipe-${recipe._id}`}
+                  recipe={recipe}
+                  initialIsLiked={true}
+                  onUnlike={() => {
+                    setFavoriteRecipes((prev) =>
+                      prev.filter((r) => r._id !== recipe._id)
+                    );
+                  }}
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <Heart className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                <p className="text-lg">No favorite recipes found</p>
+                <p className="text-sm mt-2">
+                  Save your favorite recipes using the ♡ button!
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default FavoritesPage;

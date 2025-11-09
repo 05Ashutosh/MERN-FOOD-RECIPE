@@ -13,37 +13,37 @@ import {
 } from "lucide-react";
 import { publishRecipe } from "../features/recipes/recipeSlice";
 
-const DifficultyBadge = ({ level, isSelected, onClick }) => {
+const DifficultyBadge = ({ level, label, isSelected, onClick }) => {
   const baseClasses =
     "px-4 py-2 rounded-full font-medium text-sm transition-all duration-200 cursor-pointer";
   const variants = {
-    Easy: isSelected
+    easy: isSelected
       ? "bg-green-500 text-white"
       : "bg-green-100 text-green-600 hover:bg-green-200",
-    Medium: isSelected
+    intermediate: isSelected
       ? "bg-yellow-500 text-white"
       : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200",
-    Hard: isSelected
+    advanced: isSelected
       ? "bg-red-500 text-white"
       : "bg-red-100 text-red-600 hover:bg-red-200",
   };
 
   return (
     <div className={`${baseClasses} ${variants[level]}`} onClick={onClick}>
-      {level}
+      {label}
     </div>
   );
 };
 
 const categories = [
-  { value: "appetizers", label: "APPETIZERS" },
-  { value: "main-courses", label: "MAIN COURSES" },
-  { value: "side-dishes", label: "SIDE DISHES" },
-  { value: "desserts", label: "DESSERTS" },
-  { value: "soups-salads", label: "SOUPS & SALADS" },
-  { value: "beverages", label: "BEVERAGES" },
-  { value: "snacks", label: "SNACKS" },
-  { value: "vegetarian", label: "VEGETARIAN" },
+  { value: "APPETIZERS", label: "APPETIZERS" },
+  { value: "MAIN COURSES", label: "MAIN COURSES" },
+  { value: "SIDE DISHES", label: "SIDE DISHES" },
+  { value: "DESSERTS", label: "DESSERTS" },
+  { value: "SOUPS & SALADS", label: "SOUPS & SALADS" },
+  { value: "BEVERAGES", label: "BEVERAGES" },
+  { value: "SNACKS", label: "SNACKS" },
+  { value: "VEGETARIAN", label: "VEGETARIAN" },
 ];
 
 const RecipeForm = () => {
@@ -55,7 +55,7 @@ const RecipeForm = () => {
     title: "",
     prepTime: "",
     cookTime: "",
-    difficulty: "Easy",
+    difficulty: "easy",
     description: "",
     ingredients: [""],
     instructions: [""],
@@ -108,7 +108,6 @@ const RecipeForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Form validation
     if (
       !formData.title ||
       !formData.description ||
@@ -126,26 +125,24 @@ const RecipeForm = () => {
     }
 
     try {
-      // Create FormData object from the form
       const formDataToSend = new FormData();
 
-      // Add basic fields
       formDataToSend.append("title", formData.title);
       formDataToSend.append("description", formData.description);
       formDataToSend.append("category", formData.category);
       formDataToSend.append("prepTime", formData.prepTime);
       formDataToSend.append("cookTime", formData.cookTime);
       formDataToSend.append("difficulty", formData.difficulty);
-      formDataToSend.append("mediaType", formData.mediaType);
+      
+      const type = formData.mediaType === "photo" ? "image" : "video";
+      formDataToSend.append("type", type);
 
-      // Add the correct media file based on selected type
       if (formData.mediaType === "photo") {
         formDataToSend.append("mediaFile", formData.image);
       } else {
         formDataToSend.append("mediaFile", formData.video);
       }
 
-      // Add arrays
       formData.instructions.forEach((instruction, index) => {
         formDataToSend.append("steps", instruction);
       });
@@ -154,7 +151,6 @@ const RecipeForm = () => {
         formDataToSend.append("ingredients", ingredient);
       });
 
-      // Dispatch action and navigate on success
       await dispatch(publishRecipe(formDataToSend)).unwrap();
       navigate("/");
     } catch (err) {
@@ -163,7 +159,7 @@ const RecipeForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-orange-100 to-yellow-100 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-r from-orange-100 to-yellow-100 py-12 px-4 overflow-x-hidden max-w-full">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden">
         <div className="p-6 md:p-8">
           <div className="flex justify-between items-center border-b pb-4 mb-6">
@@ -296,12 +292,17 @@ const RecipeForm = () => {
                     Difficulty Level
                   </label>
                   <div className="flex gap-4">
-                    {["Easy", "Medium", "Hard"].map((level) => (
+                    {[
+                      { value: "easy", label: "Easy" },
+                      { value: "intermediate", label: "Medium" },
+                      { value: "advanced", label: "Hard" }
+                    ].map((diff) => (
                       <DifficultyBadge
-                        key={level}
-                        level={level}
-                        isSelected={formData.difficulty === level}
-                        onClick={() => handleDifficultyChange(level)}
+                        key={diff.value}
+                        level={diff.value}
+                        label={diff.label}
+                        isSelected={formData.difficulty === diff.value}
+                        onClick={() => handleDifficultyChange(diff.value)}
                       />
                     ))}
                   </div>

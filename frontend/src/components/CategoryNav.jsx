@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CategoryNav = () => {
+const CategoryNav = ({ activeCategory, setActiveCategory }) => {
 
     const categories = [
         { id: 'all', label: 'ALL' },
@@ -13,8 +13,6 @@ const CategoryNav = () => {
         { id: 'snacks', label: 'SNACKS' },
         { id: 'vegetarian', label: 'VEGETARIAN' }
     ];
-
-    const [activeCategory, setActiveCategory] = React.useState('all');
 
     return (
         <div className="w-full overflow-x-auto no-scrollbar mb-8">
@@ -29,7 +27,6 @@ const CategoryNav = () => {
                             : 'text-gray-500 hover:text-gray-700'
                         }`}
 
-                        // bg-orange-100 text-orange-500  hover:bg-orange-200
                     >
                         {category.label}
                     </button>

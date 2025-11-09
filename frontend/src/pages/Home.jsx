@@ -1,12 +1,53 @@
-import { useRef } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+// import { ArrowLeft, ArrowRight } from "lucide-react";
 import RecipeCard from "../components/RecipeCard";
-import recipes from "../data/recipes.js";
+import {
+  fetchRecipes,
+  fetchRecipesLimit,
+} from "../features/recipes/recipeSlice";
 import CategoryNav from "../components/CategoryNav.jsx";
+import { useLocation } from "react-router-dom";
 
 const HomePage = () => {
-  const trendingRef = useRef(null);
-  const recommendedRef = useRef(null);
+  const dispatch = useDispatch();
+  const location = useLocation();
+
+  const { recipes, loading, error, totalPages, currentPage } = useSelector(
+    (state) => state.recipes
+  );
+  // const trendingRef = useRef(null);
+
+  const [activeCategory, setActiveCategory] = useState("all");
+
+  useEffect(() => {
+    dispatch(fetchRecipes({ query: "" }));
+  }, [dispatch]);
+
+  const [page, setPage] = useState(1);
+  const limit = 2;
+
+  // useEffect(() => {
+  //   dispatch(fetchRecipesLimit({ page, limit }));
+  // }, [dispatch, page]);
+
+  const filteredRecipes =
+    activeCategory === "all"
+      ? recipes
+      : recipes?.filter((recipe) => {
+          const recipeCategory = recipe.category?.toLowerCase();
+          const categoryMap = {
+            appetizers: "appetizers",
+            "main-courses": "main courses",
+            "side-dishes": "side dishes",
+            desserts: "desserts",
+            "soups-salads": "soups & salads",
+            beverages: "beverages",
+            snacks: "snacks",
+            vegetarian: "vegetarian",
+          };
+          return recipeCategory === categoryMap[activeCategory];
+        });
 
   const scroll = (ref, direction) => {
     if (ref.current) {
@@ -15,47 +56,65 @@ const HomePage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-lg text-gray-600">Loading recipes...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-lg text-red-600">Error: {error}</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    // <div className="min-h-screen bg-gray-50">
-    //     <Sidebar />
-    //     <div className="flex-1 md:ml-64">
-    <main className="container mx-auto px-4 py-8">
-      <CategoryNav />
+    <main className="container mx-auto px-4 py-8 overflow-x-hidden max-w-full">
+      <CategoryNav
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+      />
       <section className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Recommended Recipes</h2>
-          <div className="gap-2 hidden md:block">
-            <button
-              onClick={() => scroll(recommendedRef, "left")}
-              className="bg-orange-100 rounded-xl  px-5 py-2 hover:orange-500 group mr-2"
-            >
-              <ArrowLeft className="h-5 w-5 text-orange-300 group-hover:text-orange-500" />
-            </button>
-            <button
-              onClick={() => scroll(recommendedRef, "right")}
-              className="bg-orange-100 rounded-xl  px-5 py-2 hover:orange-500 group "
-            >
-              <ArrowRight className="h-5 w-5 text-orange-300 group-hover:text-orange-500" />
-            </button>
-          </div>
         </div>
-        <div
-          ref={recommendedRef}
-          className="flex flex-col md:flex-row overflow-x-auto pb-4 gap-6 no-scrollbar"
-          style={{
-            msOverflowStyle: "none" /* IE and Edge */,
-            scrollbarWidth: "none" /* Firefox */,
-          }}
-        >
-          {recipes.map((recipe) => (
-            <div key={recipe.id} className="min-w-[300px]">
-              <RecipeCard recipe={recipe} />
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pb-4">
+          {filteredRecipes && filteredRecipes.length > 0 ? (
+            filteredRecipes.map((recipe) => (
+              <RecipeCard key={recipe._id} recipe={recipe} />
+            ))
+          ) : (
+            <p className="text-gray-600">No recipes found in this category</p>
+          )}
         </div>
       </section>
+      <div className="w-full m-auto flex justify-center items-center">
+        <button
+          className="py-1 px-3 rounded-2xl bg-orange-500 text-lg text-white"
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+        >
+          Prev
+        </button>
+        <span className=" px-2">
+          {currentPage}/{totalPages}
+        </span>
+        <button
+          className="py-1 px-3 rounded-2xl bg-orange-500 text-lg text-white"
+          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+        >
+          Next
+        </button>
+      </div>
 
-      {/* Trending Recipes */}
+      {/* Trending Recipes
       <section className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Trending Now</h2>
@@ -82,62 +141,19 @@ const HomePage = () => {
             scrollbarWidth: "none",
           }}
         >
-          {recipes.map((recipe) => (
-            <div key={recipe.id} className="min-w-[300px]">
-              <RecipeCard recipe={recipe} />
-            </div>
-          ))}
+          {recipes && recipes.length > 0 ? (
+            recipes.map((recipe) => (
+              <div key={recipe._id} className="min-w-[300px]">
+                <RecipeCard recipe={recipe} />
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-600">No recipes found</p>
+          )}
         </div>
-      </section>
+      </section> */}
     </main>
-    // </div>
-    // </div>
   );
 };
 
 export default HomePage;
-
-// Home.jsx
-// import React, { useEffect } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import RecipeCard from "../components/RecipeCard";
-// import { getRecipes } from "../features/recipes/recipeSlice";
-
-// const Home = () => {
-//   const dispatch = useDispatch();
-//   const { recipes, loading, error } = useSelector((state) => state.recipes);
-
-//   useEffect(() => {
-//     dispatch(getRecipes({ page: 1, limit: 10 }));
-//   }, [dispatch]);
-
-//   return (
-//     <div className="container mx-auto px-4 py-6">
-//       <h1 className="text-3xl font-bold mb-6">Explore Recipes</h1>
-//       {loading && <p>Loading...</p>}
-//       {error && <p className="text-red-500">{error}</p>}
-//       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-//         {recipes.map((recipe) => (
-//           <RecipeCard
-//             key={recipe._id}
-//             recipe={{
-//               id: recipe._id,
-//               title: recipe.title,
-//               description: recipe.description,
-//               category: recipe.category,
-//               difficulty: recipe.difficulty,
-//               prepTime: recipe.prepTime,
-//               cookTime: recipe.cookTime,
-//               author: recipe.owner.username,
-//               authorAvatar:
-//                 recipe.owner.avatar || "https://via.placeholder.com/40",
-//               image: recipe.mediaFile,
-//             }}
-//           />
-//         ))}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Home;

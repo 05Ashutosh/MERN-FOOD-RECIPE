@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
-import jwt from 'jsonwebtoken';
-import bcrypt from "bcrypt"; // Added missing import
+import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const { Schema } = mongoose;
 const userSchema = new Schema(
@@ -33,6 +33,10 @@ const userSchema = new Schema(
     coverImage: {
       type: String,
     },
+    bio: {
+      type: String,
+      default: "",
+    },
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -58,14 +62,11 @@ const userSchema = new Schema(
   }
 );
 
-// that is happing here
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   this.password = await bcrypt.hash(this.password, 10);
 });
-
-// user, recipes-type- post, video recipe(difference just add type), comment, likes, favorites, (follow,following
 
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);

@@ -12,13 +12,12 @@ const initialState = {
 
 export const registerUser = createAsyncThunk(
   "auth/register",
-  async (formData, { rejectWithValue, dispatch }) => {
+  async (formData, { rejectWithValue }) => {
     try {
       const response = await apiRequest(
         "/users/register",
         "POST",
-        formData,
-        dispatch
+        formData
       );
       return response;
     } catch (error) {
@@ -29,13 +28,12 @@ export const registerUser = createAsyncThunk(
 
 export const loginUser = createAsyncThunk(
   "auth/login",
-  async (credentials, { rejectWithValue, dispatch }) => {
+  async (credentials, { rejectWithValue }) => {
     try {
       const response = await apiRequest(
         "/users/login",
         "POST",
-        credentials,
-        dispatch
+        credentials
       );
       return response;
     } catch (error) {
@@ -46,13 +44,12 @@ export const loginUser = createAsyncThunk(
 
 export const logoutUserAsync = createAsyncThunk(
   "auth/logout",
-  async (_, { rejectWithValue, dispatch }) => {
+  async (_, { rejectWithValue }) => {
     try {
       const response = await apiRequest(
         "/users/logout",
         "POST",
-        null,
-        dispatch
+        null
       );
       return response;
     } catch (error) {

@@ -1,4 +1,3 @@
-// Filename: user.routes.js
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -7,12 +6,12 @@ import {
     loginUser,
     logout,
     refreshAccessToken,
-    registerUser, updateAccountDetails
+    registerUser, updateAccountDetails,
+    getUserByUsername, followUser, unfollowUser
 } from "../controllers/user.controller.js";
 
 const router = Router();
 
-// Log when a request enters the user router
 router.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] User router hit: ${req.method} ${req.url}`);
     next();
@@ -35,10 +34,23 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 router.route("/refresh-token").post(refreshAccessToken);
 
-// Secured routes
 router.route("/logout").post(verifyJWT, logout);
 router.route("/change-password").post(verifyJWT, changeCurrentPassword);
 router.route("/current-user").get(verifyJWT, getCurrentUser);
-router.route("/update-account").patch(verifyJWT, updateAccountDetails);
+router
+  .route("/update-account")
+  .patch(
+    verifyJWT,
+    upload.fields([
+      { name: "avatar", maxCount: 1 },
+      { name: "coverImage", maxCount: 1 },
+    ]),
+    updateAccountDetails
+  );
+
+// Public profile and social actions
+router.route("/profile/:username").get(getUserByUsername);
+router.route("/follow/:username").post(verifyJWT, followUser);
+router.route("/unfollow/:username").post(verifyJWT, unfollowUser);
 
 export default router;

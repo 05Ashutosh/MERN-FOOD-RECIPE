@@ -58,7 +58,6 @@ const recipeSchema = new Schema(
       type: Number,
       required: true,
     },
-    // Restrict category to the specific values
     category: {
       type: String,
       enum: CATEGORIES,
